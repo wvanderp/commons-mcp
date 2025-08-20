@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"commons-mcp": {
+			"type": "stdio",
+			"command": "tsx",
+			"args": [
+				"src/index.ts"
+			]
+		}
+	},
+	"inputs": []
+}
