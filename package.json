@@ -4,13 +4,43 @@
     "private": true,
     "type": "module",
     "description": "MCP server for searching Wikimedia Commons images.",
+    "main": "dist/index.js",
+    "bin": {
+        "commons-mcp-cli": "dist/cli.js"
+    },
+    "files": [
+        "dist/**/*",
+        "README.md",
+        "LICENSE"
+    ],
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "wikimedia",
+        "commons",
+        "images",
+        "search",
+        "typescript"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/wvanderp/commons-mcp.git"
+    },
+    "bugs": {
+        "url": "https://github.com/wvanderp/commons-mcp/issues"
+    },
+    "homepage": "https://github.com/wvanderp/commons-mcp#readme",
     "scripts": {
         "build": "tsc -p .",
         "start": "node dist/index.js",
         "dev": "tsx watch src/index.ts",
-        "lint": "eslint .",
+        "lint": "eslint src/ test/ --ext .ts,.js",
+        "lint:fix": "eslint src/ test/ --ext .ts,.js --fix",
         "typecheck": "tsc -p tsconfig.json --noEmit",
-        "test": "tsx --test"
+        "test": "tsx --test test/*.test.ts",
+        "test:watch": "tsx --test test/*.test.ts --watch",
+        "format": "prettier --write src/ test/",
+        "check": "npm run typecheck && npm run lint && npm run test"
     },
     "engines": {
         "node": ">=18.17.0"
@@ -22,6 +52,8 @@
     },
     "devDependencies": {
         "@types/node": "^20.14.9",
+        "@typescript-eslint/eslint-plugin": "^8.40.0",
+        "@typescript-eslint/parser": "^8.40.0",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-import": "^2.29.1",
