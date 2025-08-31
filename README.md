@@ -1,6 +1,6 @@
 # Commons MCP
 
-An installable Model Context Protocol (MCP) server + CLI that lets any LLM (or you) search Wikimedia Commons for freely licensed images by keyword.
+An installable Model Context Protocol (MCP) server that lets any LLM (or you) search Wikimedia Commons for freely licensed images by keyword.
 
 - Stack: Node.js + TypeScript
 - Interface: MCP server (STDIO only) exposing one tool: `search_commons`
@@ -35,16 +35,6 @@ npm install commons-mcp
 ```
 
 ## Usage
-
-### CLI (human friendly)
-
-Search images quickly:
-
-```sh
-commons-mcp --q "red panda" --limit 3
-```
-
-Output: each match with title, description, image URL, page URL separated by `---`.
 
 ### MCP Server (LLM tool integration)
 

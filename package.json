@@ -2,7 +2,7 @@
     "name": "commons-mcp",
     "version": "1.3.0",
     "type": "module",
-    "description": "Model Context Protocol server + CLI for searching Wikimedia Commons images.",
+    "description": "Model Context Protocol server for searching Wikimedia Commons images.",
     "keywords": [
         "mcp",
         "model-context-protocol",
@@ -21,8 +21,7 @@
     },
     "homepage": "https://github.com/wvanderp/commons-mcp#readme",
     "bin": {
-        "commons-mcp": "./dist/cli.js",
-        "commons-mcp-server": "./dist/index.js"
+        "commons-mcp": "./dist/index.js"
     },
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
