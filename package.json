@@ -1,6 +1,6 @@
 {
     "name": "commons-mcp",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "type": "module",
     "description": "Model Context Protocol server for searching Wikimedia Commons images.",
     "keywords": [
