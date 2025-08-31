@@ -13,10 +13,12 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout default branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -41,8 +43,11 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-            
-      - run: npm version --no-git-tag-version ${{ github.ref_name }}
+      - name: Bump package.json version
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          npm version --no-git-tag-version "$VERSION"
 
       - name: Push the version commit
         uses: EndBug/add-and-commit@v9
