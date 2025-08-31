@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { fileURLToPath } from 'url';
 import { searchCommons } from './commons.js';
 
 async function run() {
@@ -16,7 +17,7 @@ async function run() {
     }
 
     if (!query) {
-        console.error('Usage: cli --q "red panda" [--limit 3]');
+        console.error('Usage: commons-mcp --q "red panda" [--limit 3]');
         process.exit(2);
     }
 
@@ -26,7 +27,10 @@ async function run() {
     }
 }
 
-run().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+// Only run when this file is executed directly, not when imported.
+if (process.argv[1] === fileURLToPath(new URL(import.meta.url))) {
+    run().catch((e) => {
+        console.error(e);
+        process.exit(1);
+    });
+}

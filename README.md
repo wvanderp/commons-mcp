@@ -3,7 +3,7 @@
 An installable Model Context Protocol (MCP) server + CLI that lets any LLM (or you) search Wikimedia Commons for freely licensed images by keyword.
 
 - Stack: Node.js + TypeScript
-- Interface: MCP server (`stdio`) exposing one tool: `search_commons`
+- Interface: MCP server (STDIO only) exposing one tool: `search_commons`
 - Output: description, image URL, page URL (+ author/license when available)
 - Distribution: Published to npm as `commons-mcp`
 
@@ -48,13 +48,32 @@ Output: each match with title, description, image URL, page URL separated by `--
 
 ### MCP Server (LLM tool integration)
 
-Executable entrypoint:
+The server speaks ONLY STDIO (JSON‑RPC messages newline‑delimited over stdin/stdout). It opens **no HTTP / WebSocket / SSE ports**.
+
+Executable entrypoint (installed binary, recommended for VS Code and other clients):
 
 ```sh
 commons-mcp-server
 ```
 
-Integrate with an MCP-compatible client (e.g. VS Code extension) by pointing the command to `commons-mcp-server` (or to your local dev command during development).
+Dev (watch mode without a build step):
+
+```sh
+tsx watch src/index.ts
+```
+
+Production (after `npm run build`):
+
+```sh
+node dist/index.js
+```
+
+STDIO guarantees / invariants:
+
+- Stdout: ONLY valid MCP JSON-RPC frames (no logs, banners, or stray whitespace).
+- Stderr: All human / diagnostic logging.
+- Newline-delimited UTF‑8 JSON; no embedded newlines inside a single frame.
+- Process remains in foreground (no daemonization) so pipes stay open.
 
 ### Dev Workflow
 
@@ -74,33 +93,52 @@ from a test by passing a real `search` function to `createMcp` — this turns th
 test into an integration test. If you do this, ensure network access and
 external dependencies are acceptable in your CI environment.
 
-## VS Code Integration
+## VS Code Integration (STDIO)
 
-You can use this MCP server directly in VS Code with the Model Context Protocol extension:
+With the VS Code Model Context Protocol extension:
 
-1. Open `.vscode/mcp.json` in your project (or create it if missing).
-2. Add a server entry like this:
+1. Ensure the package is installed (`npm i -g commons-mcp` or project local + use `npx`).
+2. Create or edit `.vscode/mcp.json` (this repo already ships an example):
 
 ```jsonc
 {
- "servers": {
-  "my-mcp-server-a83fb132": {
-   "type": "stdio",
-   "command": "tsx",
-   "args": [
-    "watch",
-    "src/index.ts"
-   ]
-  }
- },
- "inputs": []
+    "servers": {
+        "commons-mcp": {
+            "type": "stdio",
+            "command": "commons-mcp-server"
+        }
+    }
 }
 ```
 
-3. Save the file and reload VS Code if needed.
-4. The MCP extension should now detect and offer the `search_commons` tool for use in chat or tool panels.
+For local development without a build, you can point to `tsx`:
 
-> **Tip:** You can use any unique name for the server key. The above example matches the default dev setup.
+```jsonc
+{
+    "servers": {
+        "commons-mcp-dev": {
+            "type": "stdio",
+            "command": "tsx",
+            "args": ["watch", "src/index.ts"]
+        }
+    }
+}
+```
+
+Reload VS Code or use the MCP extension command to refresh servers. The `search_commons` tool will appear. No `url`, `http`, or `sse` configuration is required (or supported) for this server.
+
+### Removal / Compliance Checklist
+
+All of the following are satisfied:
+
+| Item | Status |
+| ---- | ------ |
+| No HTTP/SSE/WebSocket listeners or imports | ✅ |
+| STDIO transport only (`StdioServerTransport`) | ✅ |
+| Foreground process (no detach) | ✅ |
+| Stdout strictly MCP frames; logs to stderr | ✅ |
+| VS Code config uses `type: "stdio"` only | ✅ |
+| No `url` fields in config | ✅ |
 
 ## Publishing & Release
 
@@ -125,6 +163,7 @@ npm publish --access public
 - No API key required, but set a descriptive `MCP_USER_AGENT` env var in production.
 - Respects Wikimedia API etiquette; avoid abusive parallel queries.
 - Output order is made deterministic-ish by stable sorting on title.
+- No network listeners are opened by this package; all communication is over the invoking process stdio pipes.
 
 ## License
 
