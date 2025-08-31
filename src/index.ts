@@ -3,7 +3,14 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { searchCommons } from './commons.js';
-import pkg from '../package.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Read package.json at runtime instead of using an import assertion.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 
 const searchSchema = z.object({
     query: z.string().min(1, 'query is required'),
