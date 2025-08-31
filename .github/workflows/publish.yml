@@ -36,7 +36,25 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: setup git for version sync
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+            
+      - run: npm version --no-git-tag-version ${{ github.event.release.tag_name }}
+
+      - name: Push the version commit
+        uses: EndBug/add-and-commit@v9
+        with:
+            default_author: github_actions
+            message: updated the version to ${{ github.event.release.tag_name }}
+
+      - name: Update the current tag to point to the new commit
+        run: git push origin HEAD:${{ github.ref }} --force
+        
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
+
+
