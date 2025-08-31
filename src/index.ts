@@ -1,7 +1,8 @@
+#!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { searchCommons as defaultSearchCommons } from './commons.js';
+import { searchCommons as defaultSearchCommons, CommonsSearchItem } from './commons.js';
 import { fileURLToPath } from 'url';
 
 const searchSchema = z.object({
@@ -13,7 +14,7 @@ const searchSchema = z.object({
  * Create and configure an McpServer instance.
  * Accepts an optional search function for easier testing/injection.
  */
-export function createMcp(searchFn = defaultSearchCommons) {
+export function createMcp(searchFn: (q: string, opts?: { limit?: number }) => Promise<CommonsSearchItem[]> = defaultSearchCommons) {
     const mcp = new McpServer(
         { name: 'commons-mcp', version: '0.1.0' },
         { capabilities: { tools: {} } },
@@ -33,7 +34,7 @@ export function createMcp(searchFn = defaultSearchCommons) {
             )
             .join('\n\n');
 
-        // Cast to unknown to satisfy the library's broad return type.
+        // Return typed structured result.
         return ({
             structuredContent: {
                 results,
@@ -47,8 +48,11 @@ export function createMcp(searchFn = defaultSearchCommons) {
         } as unknown) as Record<string, unknown>;
     };
 
-    // Cast mcp to any to avoid strict SDK overload type conflicts.
-    (mcp as any).tool(
+    type ToolRegistrar = {
+        tool(name: string, description: string, shape: unknown, handler: (args: { query: string; limit?: number }, extra?: unknown) => Promise<Record<string, unknown>>): void;
+    };
+
+    (mcp as unknown as ToolRegistrar).tool(
         'search_commons',
         'Search Wikimedia Commons for images by keywords. Returns description and image URL(s).',
         searchSchema.shape,

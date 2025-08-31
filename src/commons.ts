@@ -15,7 +15,7 @@ export interface SearchOptions {
 
 const USER_AGENT =
     process.env.MCP_USER_AGENT ||
-    'commons-mcp/0.1 (+https://www.mediawiki.org/wiki/API:Etiquette)';
+    'commons-mcp/0.1.0 (https://github.com/wvanderp/commons-mcp)';
 
 // Wikimedia Commons API endpoint
 const API_URL = 'https://commons.wikimedia.org/w/api.php';
@@ -40,6 +40,24 @@ function buildQueryURL(query: string, limit: number): string {
     return `${API_URL}?${params.toString()}`;
 }
 
+interface CommonsApiImageInfo {
+    thumburl?: string;
+    url?: string;
+    extmetadata?: Record<string, { value?: string }>;
+}
+
+interface CommonsApiPage {
+    pageid?: number;
+    ns?: number;
+    title: string;
+    fullurl?: string;
+    imageinfo?: CommonsApiImageInfo[];
+}
+
+interface CommonsApiQuery {
+    pages?: Record<string, CommonsApiPage>;
+}
+
 export async function searchCommons(
     query: string,
     { limit = 5 }: SearchOptions = {},
@@ -53,20 +71,20 @@ export async function searchCommons(
     if (!res.ok) {
         throw new Error(`Commons API error: ${res.status} ${res.statusText}`);
     }
-    const json = await res.json();
-    const pages = json?.query?.pages as Record<string, any> | undefined;
+    const json = (await res.json()) as { query?: CommonsApiQuery } | undefined;
+    const pages = json?.query?.pages;
     if (!pages) return [];
 
     const items: CommonsSearchItem[] = Object.values(pages)
-        .filter((p: any) => p?.imageinfo?.length)
-        .map((p: any) => {
-            const info = p.imageinfo[0];
-            const meta = info.extmetadata || {};
+        .filter((p) => Array.isArray(p.imageinfo) && p.imageinfo.length > 0)
+        .map((p) => {
+            const info = p.imageinfo![0];
+            const meta = info.extmetadata ?? {};
             const description =
                 meta.ImageDescription?.value?.replace(/<[^>]+>/g, '') || p.title || '';
-            const author = meta.Artist?.value?.replace(/<[^>]+>/g, '');
-            const license = meta.LicenseShortName?.value || meta.License?.value;
-            const imageUrl = info.thumburl || info.url;
+            const author = meta.Artist?.value?.replace(/<[^>]+>/g, '') as string | undefined;
+            const license = (meta.LicenseShortName?.value || meta.License?.value) as string | undefined;
+            const imageUrl = info.thumburl || info.url || '';
             const pageUrl = p.fullurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(p.title)}`;
             return { title: p.title, description, imageUrl, pageUrl, author, license };
         });

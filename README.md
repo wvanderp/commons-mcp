@@ -1,11 +1,11 @@
 # Commons MCP
 
-A Model Context Protocol (MCP) server that lets any LLM search for Wikimedia Commons photos by keywords.
+An installable Model Context Protocol (MCP) server + CLI that lets any LLM (or you) search Wikimedia Commons for freely licensed images by keyword.
 
 - Stack: Node.js + TypeScript
-- Interface: MCP server with a single tool: `search_commons`
-- Output: description and image URL(s)
-- Run standalone first; later integrate with VS Code MCP client.
+- Interface: MCP server (`stdio`) exposing one tool: `search_commons`
+- Output: description, image URL, page URL (+ author/license when available)
+- Distribution: Published to npm as `commons-mcp`
 
 ## Capabilities
 
@@ -14,24 +14,56 @@ Tool: `search_commons`
 - Input: `query` (string), optional `limit` (number, default 5)
 - Output: array of `{ title, description, imageUrl, pageUrl, author, license }`
 
-## Quick start
+## Install
 
-1. Install deps
-2. Run in dev mode
-3. Test via minimal JSON-RPC (or use the included CLI)
-
-See "Try it" below.
-
-## Try it
-
-- Dev server: `npm run dev`
-- Build: `npm run build`
-- Start (built): `npm start`
-
-CLI helper for quick testing:
+Global (exposes `commons-mcp` and `commons-mcp-server` commands):
 
 ```sh
-node dist/cli.js --q "red panda" --limit 3
+npm install -g commons-mcp
+```
+
+Ad‑hoc (no global install) using `npx`:
+
+```sh
+npx commons-mcp --q "red panda" --limit 2
+```
+
+Add to a project (for programmatic use / embedding):
+
+```sh
+npm install commons-mcp
+```
+
+## Usage
+
+### CLI (human friendly)
+
+Search images quickly:
+
+```sh
+commons-mcp --q "red panda" --limit 3
+```
+
+Output: each match with title, description, image URL, page URL separated by `---`.
+
+### MCP Server (LLM tool integration)
+
+Executable entrypoint:
+
+```sh
+commons-mcp-server
+```
+
+Integrate with an MCP-compatible client (e.g. VS Code extension) by pointing the command to `commons-mcp-server` (or to your local dev command during development).
+
+### Dev Workflow
+
+```sh
+npm install
+npm run dev          # tsx watch mode
+npm test             # run tests (live Commons API queries)
+npm run build        # emit dist/
+npm start            # run built server
 ```
 
 ## Testing note
@@ -70,8 +102,30 @@ You can use this MCP server directly in VS Code with the Model Context Protocol 
 
 > **Tip:** You can use any unique name for the server key. The above example matches the default dev setup.
 
+## Publishing & Release
+
+Releases are automated via GitHub Actions on version tags.
+
+1. Bump the version in `package.json` (respecting semver).
+2. Commit the change: `git commit -am "chore: release v0.1.1"`.
+3. Tag it: `git tag v0.1.1`.
+4. Push: `git push && git push origin v0.1.1`.
+5. The `publish` workflow will build, test, and publish to npm (requires `NPM_TOKEN` repo secret).
+
+Local manual publish (fallback):
+
+```sh
+npm run build
+npm publish --access public
+```
+
 ## Notes
 
-- Uses Wikimedia Commons API via MediaWiki action API (`generator=search` + `prop=imageinfo`)
-- No API key required, but be respectful of rate limits.
-- Safe for public use; no nonfree content is hosted here.
+- Uses Wikimedia Commons API via MediaWiki action API (`generator=search` + `prop=imageinfo`).
+- No API key required, but set a descriptive `MCP_USER_AGENT` env var in production.
+- Respects Wikimedia API etiquette; avoid abusive parallel queries.
+- Output order is made deterministic-ish by stable sorting on title.
+
+## License
+
+MIT

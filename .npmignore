@@ -1,0 +1,15 @@
+# Exclude source & config not needed in published package
+src/*.ts
+src/**/*.ts
+!.d.ts
+node_modules
+.gitignore
+.eslintrc.json
+.prettierrc
+.vscode
+coverage
+.test-results
+.testcache
+test
+*.log
+npm-debug.log*
