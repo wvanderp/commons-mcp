@@ -7,16 +7,25 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-// Read package.json at runtime
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 
 // ---- Schemas ----
-// Use raw shapes (ZodRawShape), not z.object(...)
+// Make query optional to avoid protocol -32602; enforce in handler instead.
+// Add .describe() to help the LLM supply correct args.
 const inputSchema = {
-  query: z.string().min(1, 'query is required'),
-  limit: z.number().int().min(1).max(50).optional(),
+  query: z
+    .string()
+    .min(1, 'query must be a non-empty string')
+    .describe('Required. Search terms for Wikimedia Commons (e.g., "Maasvlakte radar at sunset").'),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(50)
+    .describe('Optional. Max results to return (1–50). Default: 10.')
+    .optional(),
 } as const;
 
 const CommonsResult = z.object({
@@ -26,7 +35,6 @@ const CommonsResult = z.object({
   pageUrl: z.string().url(),
 });
 
-// outputSchema must also be a raw shape
 const outputSchema = {
   results: z.array(CommonsResult),
 } as const;
@@ -39,11 +47,26 @@ export async function main() {
     {
       title: 'Search Wikimedia Commons',
       description:
-        'Search Wikimedia Commons for images by keywords. Returns description and image URL(s).',
+        'Search Wikimedia Commons for images by keywords. Always include "query". Example: { "query": "Nederlands scouting kampvuur", "limit": 5 }',
       inputSchema,
       outputSchema,
     },
-    async ({ query, limit }) => {
+    // Prefer the (args, extra) signature; some clients pass both.
+    async (args, _extra) => {
+      const query = args?.query?.trim();
+      const limit = args?.limit;
+
+      // Soft validation: return a tool-level error instead of a protocol error
+      if (!query) {
+        const usage =
+          'Usage: search_commons requires { "query": "<keywords>", "limit"?: number }. ' +
+          'Example: { "query": "Rotterdam harbor lights", "limit": 5 }';
+        return {
+          isError: true,
+          content: [{ type: 'text', text: `Missing "query". ${usage}` }],
+        };
+      }
+
       try {
         const results = await searchCommons(query, { limit });
 
@@ -54,7 +77,6 @@ export async function main() {
           )
           .join('\n\n');
 
-        // Optional: validate output before returning (defensive)
         const validated = z.object(outputSchema).parse({ results });
 
         return {
