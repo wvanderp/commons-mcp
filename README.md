@@ -16,7 +16,7 @@ Tool: `search_commons`
 
 ## Install
 
-Global (exposes `commons-mcp` and `commons-mcp-server` commands):
+Global (exposes `commons-mcp` commands):
 
 ```sh
 npm install -g commons-mcp
@@ -38,13 +38,10 @@ npm install commons-mcp
 
 ### MCP Server (LLM tool integration)
 
-The server speaks ONLY STDIO (JSON‑RPC messages newline‑delimited over stdin/stdout). It opens **no HTTP / WebSocket / SSE ports**.
+The server speaks ONLY STDIO (JSON‑RPC messages newline‑delimited over stdin/stdout).
 
 Executable entrypoint (installed binary, recommended for VS Code and other clients):
 
-```sh
-commons-mcp-server
-```
 
 Dev (watch mode without a build step):
 
