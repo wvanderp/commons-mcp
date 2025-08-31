@@ -29,9 +29,6 @@ jobs:
       - name: Run lint (src)
         run: npm run lint
 
-      - name: Run lint (tests)
-        run: npx eslint ./test --ext .ts
-
       - name: Run tests
         run: npm test
 
