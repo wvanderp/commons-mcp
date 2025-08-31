@@ -1,0 +1,8 @@
+{
+    "ignore": {
+        "zod": {
+            "versions": "4.1.5",
+            "reason": "does not work with the mcp sdk"
+        }
+    }
+}
